@@ -41,7 +41,7 @@ look something like this:
 Destinations:
 	1: UM-2G 1
 	2: UM-2G 2
-        3: Waldorf Blofeld
+        3: Waldorf Blofeld out
 
 These are the MIDI output ports available on your computer. You can use the
 number in front of them to select which you want to use by specifying the
@@ -52,6 +52,12 @@ If you have raw sysex files (*.syx) and want to transmit those via MIDI, you
 can use the '-r' option to tell that the bankfile is, in fact, a sysex dump.
 Note that in this case '-p' option has no effect, as the whole sysex file is
 always transmitted.
+
+Before transmitting, make sure your ESQ-1/SQ-80 is listening to sysex data
+by pressing 'MIDI' and then enabling "KEYS+CT+PC+SS+SX" ('SX' is the
+important one here). Then leave the synthesizer on a program select page
+to await the transfer. Once the transfer is complete, you should see the
+program names change on the display.
 
 
                                      *  *  *
