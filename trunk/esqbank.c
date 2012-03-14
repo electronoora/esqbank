@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
   MIDIPortRef midiPort;
   MIDISysexSendRequest sysexReq;
   CFStringRef clientName=NULL, portName=NULL;
-  static const char *options="m:c:p:slovqh";
+  static const char *options="m:c:p:lovqh";
   struct timespec rgtp;  
   int opt;
   FILE *f;
