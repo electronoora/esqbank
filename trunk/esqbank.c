@@ -116,7 +116,7 @@ void print_usage(void)
   numoutputs=MIDIGetNumberOfDestinations();
   for(i=0; i<numoutputs; i++) {
     epref=MIDIGetDestination(i);
-    if (epref) printf("\t%d: %s\n", i, getMIDIname(epref));
+    if (epref) printf("\t%d: %s\n", i+1, getMIDIname(epref));
   }
 }
 
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
       case 'm':
         sscanf(optarg, "%d", &destNum);
         numoutputs=MIDIGetNumberOfDestinations();        
-        if (destNum < 0 || destNum > numoutputs) {
+        if (destNum < 1 || destNum > numoutputs) {
           fprintf(stderr, "Invalid MIDI destination\n");
           return EXIT_FAILURE;
         }
@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 
   if (!dontSend) {
     // get MIDI destination object
-    midiDest=MIDIGetDestination(destNum);
+    midiDest=MIDIGetDestination(destNum-1);
     if (!midiDest) {
         fprintf(stderr, "Cannot aquire MIDI destination object\n");
         return EXIT_FAILURE;

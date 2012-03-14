@@ -39,9 +39,9 @@ option, you're also presented with a list of MIDI destinations that might
 look something like this:
 
 Destinations:
-	0: UM-2G 1
-	1: UM-2G 2
-        2: Waldorf Blofeld
+	1: UM-2G 1
+	2: UM-2G 2
+        3: Waldorf Blofeld
 
 These are the MIDI output ports available on your computer. You can use the
 number in front of them to select which you want to use by specifying the
