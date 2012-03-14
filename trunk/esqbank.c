@@ -109,7 +109,7 @@ void print_usage(void)
   ItemCount numoutputs;
   MIDIEndpointRef epref;
 
-  printf("esqbank %s - ESQ-1/SQ-80 program/bank MIDI transmit/convert tool for MacOS X\n(c) 2012 Jani Halme <jani.halme@gmail.com>\n\n", VERSION);
+  printf("esqbank %s - ESQ-1/SQ-80 program/bank MIDI transmit/convert tool\n(c) 2012 Jani Halme <jani.halme@gmail.com>\n\n", VERSION);
   printf("Usage: esqbank [-lorvqh] [-m destination] [-c channel] [-p program] <bankfile>\n\n");
   printf("Options:\n\t-l\t\tList the programs in the bank only\n\t-o\t\tOutput sysex to stdout instead of sending via MIDI\n\t-r\t\tRead input file as raw sysex data\n\t-m destination\tMIDI destination index (see list below)\n\t-c channel\tMIDI channel number (1 to 16)\n\t-p program\tSend a single program from the bank (number 1 to 40)\n\t-v\t\tIncrease verbosity\n\t-q\t\tQuiet mode - print only errors\n\t-h\t\tDisplay this help message and list destinations\n\n");
   printf("Destinations:\n");
@@ -299,5 +299,5 @@ int main(int argc, char *argv[])
     MIDIEndpointDispose(midiDest);
   }
 
-  return 0;  
+  return EXIT_SUCCESS;  
 }
