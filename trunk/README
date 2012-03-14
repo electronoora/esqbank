@@ -1,4 +1,4 @@
-esqbank - ESQ-1 program/bank MIDI transmit/convert tool for MacOS X
+esqbank - ESQ-1/SQ-80 program/bank MIDI transmit/convert tool for MacOS X
 (c) 2012 Jani Halme <jani.halme@gmail.com>
 
 
@@ -21,11 +21,12 @@ and lots of other useful information:
                                      *  *  *
 
 
-Usage: esqbank [-lovqh] [-m destination] [-c channel] [-p program] <bankfile>
+Usage: esqbank [-lorvqh] [-m destination] [-c channel] [-p program] <bankfile>
 
 Options:
 	-l		List the programs in the bank only
 	-o		Output sysex to stdout instead of sending via MIDI
+	-r		Read input file as raw sysex data
 	-m destination	MIDI destination index (see list below)
 	-c channel	MIDI channel number (1 to 16)
 	-p program	Send a single program from the bank (number 1 to 40)
@@ -46,6 +47,11 @@ These are the MIDI output ports available on your computer. You can use the
 number in front of them to select which you want to use by specifying the
 '-m' option on the command line. You can also specify the MIDI channel
 number using the '-c' option.
+
+If you have raw sysex files (*.syx) and want to transmit those via MIDI, you
+can use the '-r' option to tell that the bankfile is, in fact, a sysex dump.
+Note that in this case '-p' option has no effect, as the whole sysex file is
+always transmitted.
 
 
                                      *  *  *
@@ -77,9 +83,15 @@ bank dump.
 Converts all 40 programs in the bank dump into raw SysEx data and saves it
 to the file 'sysex/esq-001.syx'.
 
+
+    esqbank -r -m 1 -c 2 sysex/esq-001.syx
+
+Transmits the raw sysex dump from 'sysex/esq-001.syx' to MIDI destination 1
+using MIDI channel 2.
+
 If you have a lot of SQ80toolkit banks which you'd like to use in, for
 example, SysEx Librarian, you can use esqbank to batch convert the bank dumps
-into SysEx data. Here's an example bash script what would convert all the
+into raw sysex data. Here's an example bash script what would convert all the
 bank dumps in directory 'banks' into .syx files in 'sysex'.
 
     for I in banks/*;

@@ -20,6 +20,7 @@
 // globals
 int verbosity=0;
 int destNum=1, destChan=1, progNum=-1, dontSend=0, printSysex=0;
+int rawSysex=0;
 
 // sysex data
 char *sysex;
@@ -36,7 +37,7 @@ int makeSysex(FILE *f, int progNum)
   esq_pcb pcb;
 
   // calculate the number of programs in the bankfile
-  // and select either single program or all program dump
+  // and select either single program or bank dump
   fseek(f, 0, SEEK_END);
   i=ftell(f);
   j=(i-23)/sizeof(esq_pcb);
@@ -45,12 +46,12 @@ int makeSysex(FILE *f, int progNum)
   // sysex header and end byte
   sysexlen=6+2*(bank ? j : 1)*sizeof(esq_pcb);
   sysex=malloc(sysexlen);
-  sysex[0]=0xf0;
-  sysex[1]=0x0f;
-  sysex[2]=0x02;
-  sysex[3]=destChan-1;
-  sysex[4]=(bank ? 0x02 : 0x01);
-  sysex[sysexlen-1]=0xf7;
+  sysex[0]=0xf0;                // start of system exclusive
+  sysex[1]=0x0f;                // manufacturer ensoniq
+  sysex[2]=0x02;                // model esq-1
+  sysex[3]=destChan-1;          // midi channel 0x00..0x0f
+  sysex[4]=(bank ? 0x02 : 0x01);// 0x01=program, 0x02=bank
+  sysex[sysexlen-1]=0xf7;       // end of system exclusive
 
   // dump program(s) to sysex
   if (!bank) {
@@ -62,16 +63,16 @@ int makeSysex(FILE *f, int progNum)
   }
   pname[6]=0;
   while ((r=fread(&pcb, sizeof(esq_pcb), 1, f))) {
-    // check if it's compatible with esq-1
+    // check if program uses sq-80 waveforms
     waveforms=(pcb.osc1.waveform & pcb.osc2.waveform & pcb.osc3.waveform) & 0xe0;
     sq80only|=waveforms;
 
-    // print
+    // print program name if verbose
     memcpy(pname, pcb.name, 6*sizeof(char));
     if (verbosity > 0)
-      fprintf(stderr, "%03d: %s  [%s]\n", i+1, (char*)&pname, (waveforms ? "SQ-80 only" : "ESQ-1 | SQ-80"));
+      fprintf(stderr, "%03d: %s  [%s]\n", i+1, (char*)&pname, (waveforms ? "      | SQ-80" : "ESQ-1 | SQ-80"));
     
-    // copy pcb into sysex
+    // expand pcb data into nybbles for sysex
     for(j=0;j<sizeof(esq_pcb);j++) {
       sysex[5+2*i*sizeof(esq_pcb)+j*2]=((char*)(&pcb))[j]&0x0f;
       sysex[5+2*i*sizeof(esq_pcb)+j*2+1]=(((char*)(&pcb))[j]&0xf0)>>4;
@@ -108,9 +109,9 @@ void print_usage(void)
   ItemCount numoutputs;
   MIDIEndpointRef epref;
 
-  printf("esqbank %s - ESQ-1 program/bank MIDI transmit tool for MacOS X\n(c) 2012 Jani Halme <jani.halme@gmail.com>\n\n", VERSION);
-  printf("Usage: esqbank [-lovqh] [-m destination] [-c channel] [-p program] <bankfile>\n\n");
-  printf("Options:\n\t-l\t\tList the programs in the bank only\n\t-o\t\tOutput sysex to stdout instead of sending via MIDI\n\t-m destination\tMIDI destination index (see list below)\n\t-c channel\tMIDI channel number (1 to 16)\n\t-p program\tSend a single program from the bank (number 1 to 40)\n\t-v\t\tIncrease verbosity\n\t-q\t\tQuiet mode - print only errors\n\t-h\t\tDisplay this help message and list destinations\n\n");
+  printf("esqbank %s - ESQ-1/SQ-80 program/bank MIDI transmit/convert tool for MacOS X\n(c) 2012 Jani Halme <jani.halme@gmail.com>\n\n", VERSION);
+  printf("Usage: esqbank [-lorvqh] [-m destination] [-c channel] [-p program] <bankfile>\n\n");
+  printf("Options:\n\t-l\t\tList the programs in the bank only\n\t-o\t\tOutput sysex to stdout instead of sending via MIDI\n\t-r\t\tRead input file as raw sysex data\n\t-m destination\tMIDI destination index (see list below)\n\t-c channel\tMIDI channel number (1 to 16)\n\t-p program\tSend a single program from the bank (number 1 to 40)\n\t-v\t\tIncrease verbosity\n\t-q\t\tQuiet mode - print only errors\n\t-h\t\tDisplay this help message and list destinations\n\n");
   printf("Destinations:\n");
   numoutputs=MIDIGetNumberOfDestinations();
   for(i=0; i<numoutputs; i++) {
@@ -130,7 +131,7 @@ int main(int argc, char *argv[])
   MIDIPortRef midiPort;
   MIDISysexSendRequest sysexReq;
   CFStringRef clientName=NULL, portName=NULL;
-  static const char *options="m:c:p:lovqh";
+  static const char *options="m:c:p:lorvqh";
   struct timespec rgtp;  
   int opt;
   FILE *f;
@@ -186,6 +187,10 @@ int main(int argc, char *argv[])
         printSysex=1;
         break;
         
+      case 'r':
+        rawSysex=1;
+        break;
+        
       case 'h':
       case '?':
       default:
@@ -210,7 +215,6 @@ int main(int argc, char *argv[])
   }
 
   if (!dontSend) {
-
     // get MIDI destination object
     midiDest=MIDIGetDestination(destNum);
     if (!midiDest) {
@@ -243,8 +247,18 @@ int main(int argc, char *argv[])
     }
   }
 
-  // read bank, make sysex
-  makeSysex(f, progNum);
+  // get sysex data
+  if (rawSysex) {
+    // input is raw sysex, just read it in
+    fseek(f, 0, SEEK_END);
+    sysexlen=ftell(f);
+    sysex=malloc(sysexlen*sizeof(char));
+    fseek(f, 0, SEEK_SET);
+    fread(sysex, sizeof(char), sysexlen, f);
+  } else {
+    // read sq80toolkit bank dump and convert to sysex
+    makeSysex(f, progNum);
+  }
   sysexReq.destination=midiDest;
   sysexReq.data=(Byte*)sysex;
   sysexReq.bytesToSend=sysexlen;
