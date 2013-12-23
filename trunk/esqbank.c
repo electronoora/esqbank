@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 
   OSStatus ret;
   ItemCount numoutputs;
-  MIDIEndpointRef midiDest;
+  MIDIEndpointRef midiDest=0;
   MIDIClientRef midiClient;
   MIDIPortRef midiPort;
   MIDISysexSendRequest sysexReq;
